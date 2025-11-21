@@ -24,11 +24,13 @@
 from .multilabel import MultiLabelSegmentation
 from .speaker_diarization import SpeakerDiarization
 from .speech_separation import SpeechSeparation
+from .streaming_speaker_diarization import StreamingSpeakerDiarization
 from .voice_activity_detection import VoiceActivityDetection
 
 __all__ = [
     "MultiLabelSegmentation",
     "VoiceActivityDetection",
     "SpeakerDiarization",
+    "StreamingSpeakerDiarization",
     "SpeechSeparation",
 ]
