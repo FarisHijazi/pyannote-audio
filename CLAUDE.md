@@ -80,18 +80,33 @@ for output in pipeline.stream("audio.wav"):
         print(f"Complete! Total speakers: {len(output.cumulative_diarization.labels())}")
 ```
 
-#### HuggingFace Token Setup
+#### HuggingFace Token Setup (First Time Only)
 
-The streaming diarization requires a HuggingFace token with access to pyannote models:
+The streaming diarization requires a HuggingFace token **only for the first download**.
+After models are cached locally, no token is needed for subsequent runs.
 
+**First Time Setup:**
 1. Get token from: https://huggingface.co/settings/tokens
 2. Accept terms for:
    - https://huggingface.co/pyannote/speaker-diarization-3.1
    - https://huggingface.co/pyannote/segmentation-3.0
-3. Set token via:
-   - Environment variable: `export HF_TOKEN=your_token`
-   - `.env` file: `HF_TOKEN=your_token`
-   - Or use the interactive prompt in `test_streaming_diarization.py`
+3. Download models once:
+   ```bash
+   export HF_TOKEN=your_token
+   python download_models.py
+   ```
+
+**Subsequent Runs:**
+No token needed! Just run:
+```bash
+python test_streaming_diarization.py
+python demo_streaming_diarization.py
+```
+
+The token can also be set via:
+- Environment variable: `export HF_TOKEN=your_token`
+- `.env` file: `HF_TOKEN=your_token`
+- Interactive prompt in scripts (press Enter to skip if models are cached)
 
 #### Testing
 

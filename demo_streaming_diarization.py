@@ -67,20 +67,7 @@ def stream_diarize(audio_file, hf_token, chunk_duration, overlap_duration, speak
 
     if not hf_token:
         hf_token = get_hf_token()
-        if not hf_token:
-            yield (
-                "⚠️  HuggingFace token required!\n\n"
-                "Please either:\n"
-                "1. Enter token in the text box below, OR\n"
-                "2. Set HF_TOKEN environment variable\n\n"
-                "Get your token from: https://huggingface.co/settings/tokens\n"
-                "Accept terms at:\n"
-                "  - https://huggingface.co/pyannote/speaker-diarization-3.1\n"
-                "  - https://huggingface.co/pyannote/segmentation-3.0",
-                "",
-                0
-            )
-            return
+        # Token can be None if models are cached
 
     try:
         # Initialize pipeline
@@ -198,11 +185,13 @@ def create_demo():
 
         Upload an audio file to see real-time speaker diarization with chunk-by-chunk processing!
 
-        ### Setup Requirements:
+        ### Setup Requirements (First Time Only):
         1. **HuggingFace Token**: Get from [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
         2. **Accept Terms**:
            - [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1)
            - [pyannote/segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
+
+        **Note**: After first download, models are cached locally. No token needed for subsequent runs!
         """)
 
         with gr.Row():

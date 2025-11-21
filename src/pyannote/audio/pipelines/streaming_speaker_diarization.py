@@ -89,9 +89,11 @@ class StreamingSpeakerDiarization(SpeakerDiarization):
     Example
     -------
     >>> from pyannote.audio.pipelines.streaming_speaker_diarization import StreamingSpeakerDiarization
+    >>>
+    >>> # HF token only needed on first download, then models are cached
     >>> pipeline = StreamingSpeakerDiarization.from_pretrained(
     ...     "pyannote/speaker-diarization-3.1",
-    ...     use_auth_token="YOUR_HF_TOKEN"
+    ...     use_auth_token="YOUR_HF_TOKEN"  # Optional if models already cached
     ... )
     >>>
     >>> # Process audio file in streaming mode
@@ -99,6 +101,11 @@ class StreamingSpeakerDiarization(SpeakerDiarization):
     ...     print(f"Chunk {output.segment}: {len(output.speaker_diarization.labels())} speakers")
     ...     for turn, _, speaker in output.speaker_diarization.itertracks(yield_label=True):
     ...         print(f"  {turn.start:.1f}s - {turn.end:.1f}s: {speaker}")
+
+    Note
+    ----
+    After the first run with a valid HuggingFace token, models are cached locally.
+    Subsequent runs don't require the token - just pass use_auth_token=None or omit it.
     """
 
     def __init__(

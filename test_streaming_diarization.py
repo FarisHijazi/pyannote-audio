@@ -33,11 +33,27 @@ def get_hf_token():
                     if token and token != "your_huggingface_token_here":
                         return token
 
-    # Prompt user for token
+    # Try without token first (models might be cached)
     print("\n" + "="*70)
-    print("HuggingFace Token Required")
+    print("HuggingFace Token Check")
     print("="*70)
-    print("\nTo use pyannote speaker diarization, you need a HuggingFace token.")
+    print("\nNo HF token found in environment or .env file.")
+    print("Checking if models are already cached locally...")
+
+    # Try loading without token
+    try:
+        from pyannote.audio import Pipeline
+        Pipeline.from_pretrained(
+            "pyannote/speaker-diarization-3.1",
+            use_auth_token=None
+        )
+        print("✅ Models found in cache! No token needed.")
+        return None
+    except Exception:
+        pass
+
+    # Prompt user for token
+    print("\n❌ Models not cached. HuggingFace token required for first download.")
     print("\nSteps to get your token:")
     print("  1. Go to https://huggingface.co/settings/tokens")
     print("  2. Create a new token (or use existing one)")
@@ -48,13 +64,15 @@ def get_hf_token():
     print("\nYou can either:")
     print("  - Set HF_TOKEN environment variable")
     print("  - Create .env file with: HF_TOKEN=your_token")
-    print("  - Enter token now (will be saved to .env)\n")
+    print("  - Enter token now (will be saved to .env)")
+    print("  - Or press Enter to try without token (will fail if not cached)\n")
 
-    token = input("Enter your HuggingFace token (or press Enter to exit): ").strip()
+    token = input("Enter your HuggingFace token (or press Enter to skip): ").strip()
 
     if not token:
-        print("\nNo token provided. Exiting.")
-        sys.exit(1)
+        print("\n⚠️  No token provided. Attempting to continue without token...")
+        print("This will only work if models are already cached locally.")
+        return None
 
     # Save token to .env file
     save = input("\nSave token to .env file for future use? (y/n): ").strip().lower()
