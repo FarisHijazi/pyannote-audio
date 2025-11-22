@@ -255,8 +255,28 @@ class StreamingSpeakerDiarization(SpeakerDiarization):
         chunk_embeddings = {}
         local_speaker_map = {}  # Maps local speaker index to global speaker label
 
+        # Convert binarized to speech segments
+        # binarized is a SlidingWindowFeature with shape (num_frames, num_classes)
+        # Find contiguous regions where any class is active
+        speech_regions = []
+
+        frames = binarized.data
+        sliding_window = binarized.sliding_window
+
+        is_speech = np.max(frames, axis=1) > 0.5  # Any class active
+
+        # Find start/end of speech segments
+        changes = np.diff(np.concatenate([[False], is_speech, [False]]).astype(int))
+        starts = np.where(changes == 1)[0]
+        ends = np.where(changes == -1)[0]
+
+        for start_idx, end_idx in zip(starts, ends):
+            start_time = sliding_window[start_idx].middle
+            end_time = sliding_window[end_idx - 1].middle
+            speech_regions.append(Segment(start_time, end_time))
+
         # Extract embeddings for each speech region
-        for speech_turn in binarized.get_timeline():
+        for speech_turn in speech_regions:
             # Skip very short segments
             if speech_turn.duration < 0.5:
                 continue
