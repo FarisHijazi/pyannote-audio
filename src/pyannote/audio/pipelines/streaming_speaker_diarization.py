@@ -256,17 +256,26 @@ class StreamingSpeakerDiarization(SpeakerDiarization):
         local_speaker_map = {}  # Maps local speaker index to global speaker label
 
         # Convert binarized to speech segments
-        # binarized is a SlidingWindowFeature with shape (num_frames, num_classes)
+        # binarized is a SlidingWindowFeature with shape (num_frames, num_classes) or (num_frames,)
         # Find contiguous regions where any class is active
         speech_regions = []
 
         frames = binarized.data
         sliding_window = binarized.sliding_window
 
-        is_speech = np.max(frames, axis=1) > 0.5  # Any class active
+        # Handle both 1D and 2D frames
+        if frames.ndim == 1:
+            is_speech = frames > 0.5
+        else:
+            is_speech = np.max(frames, axis=1) > 0.5  # Any class active
+
+        # Ensure 1D boolean array
+        is_speech = is_speech.ravel()
 
         # Find start/end of speech segments
-        changes = np.diff(np.concatenate([[False], is_speech, [False]]).astype(int))
+        # Pad with False on both sides to detect boundaries
+        padded = np.concatenate(([False], is_speech, [False]))
+        changes = np.diff(padded.astype(int))
         starts = np.where(changes == 1)[0]
         ends = np.where(changes == -1)[0]
 
