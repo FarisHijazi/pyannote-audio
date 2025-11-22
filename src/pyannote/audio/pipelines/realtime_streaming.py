@@ -76,11 +76,18 @@ class RealTimeStreamingDiarization:
         if self.is_started:
             return
 
-        # Load pipeline
-        self.pipeline = StreamingSpeakerDiarization.from_pretrained(
-            "pyannote/speaker-diarization-3.1",
-            use_auth_token=self.hf_token
+        # Load streaming pipeline
+        # Pass model names directly
+        from pyannote.audio.pipelines.utils import get_model
+
+        self.pipeline = StreamingSpeakerDiarization(
+            segmentation="pyannote/segmentation-3.0",
+            embedding="pyannote/wespeaker-voxceleb-resnet34-LM",
+            chunk_duration=self.chunk_duration,
+            overlap_duration=1.0,
         )
+        # Instantiate with no params - models should be cached
+        self.pipeline.instantiate({})
 
         # Configure for low latency
         if self.latency_mode == 'low':
@@ -103,8 +110,6 @@ class RealTimeStreamingDiarization:
 
     def reset(self):
         """Reset the audio buffer and processing state"""
-        if self.pipeline:
-            self.pipeline.reset()
         self.audio_buffer.clear()
         self.buffer_duration = 0.0
         self.total_processed = 0.0
