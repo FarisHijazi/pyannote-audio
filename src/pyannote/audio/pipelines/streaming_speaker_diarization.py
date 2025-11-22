@@ -292,11 +292,20 @@ class StreamingSpeakerDiarization(SpeakerDiarization):
 
             # Extract embedding for this segment
             try:
-                excerpt = Segment(speech_turn.start, speech_turn.end)
+                # Extract the actual audio segment
+                start_sample = int(speech_turn.start * sample_rate)
+                end_sample = int(speech_turn.end * sample_rate)
+
+                # Extract segment from waveform
+                if waveform.ndim == 1:
+                    segment_audio = waveform[start_sample:end_sample].unsqueeze(0)
+                else:
+                    segment_audio = waveform[:, start_sample:end_sample]
+
+                # Create input dict for embedding model
                 embedding_input = {
-                    "waveform": waveform,
+                    "waveform": segment_audio,
                     "sample_rate": sample_rate,
-                    "excerpt": excerpt
                 }
 
                 # Get embedding
