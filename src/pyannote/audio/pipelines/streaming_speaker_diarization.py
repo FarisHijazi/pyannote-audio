@@ -245,9 +245,7 @@ class StreamingSpeakerDiarization(SpeakerDiarization):
         binarized = binarize(
             segmentation,
             onset=0.5,
-            offset=0.5,
-            min_duration_on=0.0,
-            min_duration_off=0.0
+            offset=0.5
         )
 
         # Create annotation for speech regions
