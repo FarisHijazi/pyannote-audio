@@ -36,7 +36,7 @@ try:
     print("Downloading: pyannote/speaker-diarization-3.1")
     pipeline = Pipeline.from_pretrained(
         "pyannote/speaker-diarization-3.1",
-        use_auth_token=HF_TOKEN
+        token=HF_TOKEN
     )
     print("✅ Speaker diarization pipeline downloaded")
 
@@ -45,7 +45,7 @@ try:
     from pyannote.audio import Model
     segmentation_model = Model.from_pretrained(
         "pyannote/segmentation-3.0",
-        use_auth_token=HF_TOKEN
+        token=HF_TOKEN
     )
     print("✅ Segmentation model downloaded")
 
@@ -53,7 +53,7 @@ try:
     print("\nDownloading: pyannote/wespeaker-voxceleb-resnet34-LM")
     embedding_model = Model.from_pretrained(
         "pyannote/wespeaker-voxceleb-resnet34-LM",
-        use_auth_token=HF_TOKEN
+        token=HF_TOKEN
     )
     print("✅ Embedding model downloaded")
 
