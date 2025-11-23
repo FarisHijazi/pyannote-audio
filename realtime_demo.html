@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Speaker Diarization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        #startBtn {
+            background: #4CAF50;
+            color: white;
+        }
+
+        #startBtn:hover:not(:disabled) {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        #stopBtn {
+            background: #f44336;
+            color: white;
+        }
+
+        #stopBtn:hover:not(:disabled) {
+            background: #da190b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status.info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border-left: 4px solid #1976d2;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            color: #388e3c;
+            border-left: 4px solid #388e3c;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+
+        .status.recording {
+            background: #fff3e0;
+            color: #e65100;
+            border-left: 4px solid #e65100;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .results-container {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .results-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .result-item {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .result-time {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 5px;
+        }
+
+        .result-speaker {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .result-duration {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        .speaker-colors {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .speaker-tag {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ Real-Time Speaker Diarization</h1>
+        <p class="subtitle">Click "Start Recording" and speak - see who's talking in real-time!</p>
+
+        <div class="controls">
+            <button id="startBtn">🔴 Start Recording</button>
+            <button id="stopBtn" disabled>⏹️ Stop Recording</button>
+        </div>
+
+        <div id="status" class="status info">
+            Ready to start. Click "Start Recording" to begin.
+        </div>
+
+        <div class="results-container">
+            <div class="results-title">Live Results</div>
+            <div id="results">
+                <div class="no-results">
+                    No results yet. Start recording to see live speaker diarization!
+                </div>
+            </div>
+        </div>
+
+        <div class="speaker-colors" id="speakers"></div>
+    </div>
+
+    <script>
+        let websocket = null;
+        let mediaRecorder = null;
+        let audioContext = null;
+        let isRecording = false;
+        let speakers = new Set();
+        const speakerColors = [
+            '#667eea', '#f093fb', '#4facfe', '#43e97b',
+            '#fa709a', '#fee140', '#30cfd0', '#a8edea'
+        ];
+
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const statusEl = document.getElementById('status');
+        const resultsEl = document.getElementById('results');
+        const speakersEl = document.getElementById('speakers');
+
+        function updateStatus(message, type = 'info') {
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function addResult(result) {
+            // Remove "no results" message
+            const noResults = resultsEl.querySelector('.no-results');
+            if (noResults) {
+                noResults.remove();
+            }
+
+            // Track speaker
+            if (!speakers.has(result.speaker)) {
+                speakers.add(result.speaker);
+                updateSpeakerList();
+            }
+
+            // Add result
+            const div = document.createElement('div');
+            div.className = 'result-item';
+            div.style.borderLeftColor = getSpeakerColor(result.speaker);
+
+            div.innerHTML = `
+                <div class="result-time">${result.time.toFixed(1)}s</div>
+                <div class="result-speaker">${result.speaker}</div>
+                <div class="result-duration">
+                    ${result.start.toFixed(1)}s - ${result.end.toFixed(1)}s
+                    (${(result.end - result.start).toFixed(1)}s)
+                </div>
+            `;
+
+            resultsEl.insertBefore(div, resultsEl.firstChild);
+
+            // Keep only last 50 results
+            while (resultsEl.children.length > 50) {
+                resultsEl.removeChild(resultsEl.lastChild);
+            }
+        }
+
+        function getSpeakerColor(speaker) {
+            const speakerList = Array.from(speakers);
+            const index = speakerList.indexOf(speaker);
+            return speakerColors[index % speakerColors.length];
+        }
+
+        function updateSpeakerList() {
+            speakersEl.innerHTML = '';
+            speakers.forEach((speaker, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'speaker-tag';
+                tag.textContent = speaker;
+                tag.style.backgroundColor = speakerColors[index % speakerColors.length];
+                tag.style.color = 'white';
+                speakersEl.appendChild(tag);
+            });
+        }
+
+        async function startRecording() {
+            try {
+                updateStatus('Connecting to server...', 'info');
+
+                // Connect to WebSocket
+                websocket = new WebSocket('ws://localhost:8765');
+
+                websocket.onopen = async () => {
+                    updateStatus('Requesting microphone access...', 'info');
+
+                    // Get microphone access
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                    updateStatus('🔴 Recording... Speak now!', 'recording');
+
+                    // Create audio context
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+                    const source = audioContext.createMediaStreamSource(stream);
+
+                    // Create script processor for audio chunks
+                    const processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+                    processor.onaudioprocess = (e) => {
+                        if (isRecording && websocket.readyState === WebSocket.OPEN) {
+                            const audioData = e.inputBuffer.getChannelData(0);
+                            websocket.send(JSON.stringify({
+                                type: 'audio',
+                                audio: Array.from(audioData)
+                            }));
+                        }
+                    };
+
+                    source.connect(processor);
+                    processor.connect(audioContext.destination);
+
+                    mediaRecorder = { stream, processor };
+                    isRecording = true;
+
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                };
+
+                websocket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+
+                    if (data.type === 'status') {
+                        updateStatus(data.message, 'info');
+                    } else if (data.type === 'result') {
+                        addResult(data);
+                    } else if (data.type === 'error') {
+                        updateStatus(`Error: ${data.message}`, 'error');
+                    }
+                };
+
+                websocket.onerror = (error) => {
+                    updateStatus('Connection error. Is the server running?', 'error');
+                    console.error('WebSocket error:', error);
+                };
+
+                websocket.onclose = () => {
+                    updateStatus('Disconnected from server', 'info');
+                    stopRecording();
+                };
+
+            } catch (err) {
+                updateStatus(`Error: ${err.message}`, 'error');
+                console.error('Error:', err);
+            }
+        }
+
+        function stopRecording() {
+            isRecording = false;
+
+            if (websocket) {
+                websocket.send(JSON.stringify({ type: 'stop' }));
+                websocket.close();
+                websocket = null;
+            }
+
+            if (mediaRecorder) {
+                if (mediaRecorder.stream) {
+                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                }
+                if (mediaRecorder.processor) {
+                    mediaRecorder.processor.disconnect();
+                }
+                mediaRecorder = null;
+            }
+
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            updateStatus('Stopped recording', 'info');
+        }
+
+        startBtn.addEventListener('click', startRecording);
+        stopBtn.addEventListener('click', stopRecording);
+    </script>
+</body>
+</html>
